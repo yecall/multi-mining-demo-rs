@@ -20,6 +20,7 @@ members = [
   "util/jsonrpc-types",
   "util/stop-handler",
   "util/lru-cache",
+  "util/merkle-tree",
   "miner-server",
   "multi-miner",
 
