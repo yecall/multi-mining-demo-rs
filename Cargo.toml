@@ -19,6 +19,7 @@ members = [
   "util",
   "util/jsonrpc-types",
   "util/stop-handler",
+  "util/lru-cache",
   "miner-server",
   "multi-miner",
 

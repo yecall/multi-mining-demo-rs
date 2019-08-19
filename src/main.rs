@@ -23,7 +23,7 @@ fn main() {
     let (new_work_tx, new_work_rx) = unbounded();
     let cc = ClientConfig {
         rpc_url: "http://127.0.0.1:3131/".to_owned(),
-        poll_interval: 10000000,
+        poll_interval: 3000,
         job_on_submit: true
     };
 

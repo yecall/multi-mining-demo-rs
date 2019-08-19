@@ -71,8 +71,8 @@ impl Miner {
             merkle_proof: vec![]
         };
             self.client.submit_job(pow_hash, &job);
-            self.client.try_update_job_template();
-            self.notify_workers(WorkerMessage::Start);
+            //self.client.try_update_job_template();
+            //self.notify_workers(WorkerMessage::Start);
 
     }
 
