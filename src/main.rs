@@ -20,6 +20,10 @@ pub struct Work {
 }
 fn main() {
 
+
+
+    println!("thsi is main thread id {:?}",thread::current().id());
+
     let (new_work_tx, new_work_rx) = unbounded();
     let cc = ClientConfig {
         rpc_url: "http://127.0.0.1:3131/".to_owned(),

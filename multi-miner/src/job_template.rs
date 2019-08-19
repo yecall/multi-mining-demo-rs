@@ -24,18 +24,21 @@ pub struct ProofNonce {
 }
 
 
+
 #[derive(Clone, Serialize, Deserialize, Debug)]
 pub struct ProofMulti {
     /// Extra Data used to encode miner info AND more entropy
     pub extra_data: Vec<u8>,
     /// merkle root of multi-mining headers
     pub merkle_root: Hash,
+    /// merkle tree spv proof
+    pub merkle_proof: Vec<u8>,
     /// POW block nonce
     pub nonce: u64,
     /// shard info
     pub shard_num: u32,
     pub shard_cnt: u32,
-    /// merkle tree spv proof
-    pub merkle_proof: Vec<u8>,
+
 }
+
 

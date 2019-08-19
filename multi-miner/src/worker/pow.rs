@@ -49,6 +49,8 @@ impl Dummy {
 
     fn solve(&self, pow_hash: Hash, nonce: u64) {
         let seal = Seal { extra_data: vec![], nonce };
+        println!("solve send_seal_tx: {}", pow_hash);
+
         if let Err(err) = self.seal_tx.send((pow_hash.clone(), seal)) {
             error!("seal_tx send error {:?}", err);
         }
@@ -57,6 +59,8 @@ impl Dummy {
 
 impl Worker for Dummy {
     fn run<G: FnMut() -> u64>(&mut self, mut rng: G) {
+        println!("thsi is worker thread id {:?}",thread::current().id());
+
         loop {
             self.poll_worker_message();
             if self.start {

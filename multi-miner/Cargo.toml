@@ -18,6 +18,8 @@ hyper = "0.12"
 failure = "0.1.5"
 yee-stop-handler = { package = "yee-stop-handler", path = "../util/stop-handler" }
 yee-jsonrpc-types = { package = "yee-jsonrpc-types", path = "../util/jsonrpc-types" }
+lru-cache = { package = "lru-cache", path = "../util/lru-cache" }
+util = { package = "util", path = "../util" }
 primitives = { package = "substrate-primitives", git = "https://github.com/yeeco/substrate.git", branch = "v1.0" }
 tokio = "0.1.7"
 exit-future = "0.1"

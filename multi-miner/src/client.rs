@@ -154,7 +154,10 @@ impl Client {
     }
 
     pub fn poll_job_template(&mut self) {
+        println!("thsi is poll_job_template thread id {:?}",thread::current().id());
+
         loop {
+            println!("poll job template...");
             info!("poll job template...");
             self.try_update_job_template();
             thread::sleep(time::Duration::from_millis(self.config.poll_interval));
@@ -200,7 +203,17 @@ impl Client {
 
     fn notify_new_work(&self, job_template: JobTemplate) -> Result<(), Error> {
        // let work: Work = job_template.into();
-        let work = Work{ rawHash: job_template.rawHash};
+
+        let work = Work{
+            rawHash: job_template.rawHash,
+            difficulty: job_template.difficulty,
+            extra_data: vec![],
+            merkle_root: Hash::random(),
+            merkle_proof: vec![],
+            shard_num: 1,
+            shard_cnt: 4
+        };
+        println!("notify_new_work: {}", job_template.rawHash);
 
         self.new_work_tx.send(work)?;
         Ok(())

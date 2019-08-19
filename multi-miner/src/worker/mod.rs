@@ -24,6 +24,11 @@ pub struct Seal {
     pub nonce: u64,
 }
 
+pub struct MerkleSeal {
+    pub merkle_root: Hash,
+    pub merkle_proof: Vec<u8>,
+}
+
 pub struct WorkerController {
     inner: Vec<Sender<WorkerMessage>>,
 }
