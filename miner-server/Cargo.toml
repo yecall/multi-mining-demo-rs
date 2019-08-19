@@ -1,0 +1,15 @@
+[package]
+name = "yee-multi-server"
+version = "0.1.0"
+authors = ["YeeCo <contact@yeefoundation.com>"]
+edition = "2018"
+
+[dependencies]
+yee-multi-miner = { package = "yee-multi-miner", path = "../multi-miner" }
+jsonrpc-http-server  = "13.0.0"
+jsonrpc-core-client = "13.0.0"
+jsonrpc-derive  = "13.0.0"
+jsonrpc-core = "13.0.0"
+futures = "0.1"
+log = "0.4"
+serde = "1.0"

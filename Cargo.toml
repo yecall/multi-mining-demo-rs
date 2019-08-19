@@ -1,0 +1,25 @@
+[package]
+name = "miner-demo"
+version = "0.1.0"
+authors = ["YeeCo <contact@yeefoundation.com>"]
+edition = "2018"
+
+
+
+[[bin]]
+name = "miner"
+path = "src/main.rs"
+
+[dependencies]
+crossbeam-channel = "0.3"
+log = "0.4"
+yee-multi-miner ={path = "multi-miner"}
+[workspace]
+members = [
+  "util",
+  "util/jsonrpc-types",
+  "util/stop-handler",
+  "miner-server",
+  "multi-miner",
+
+]
