@@ -25,3 +25,4 @@ tokio = "0.1.7"
 exit-future = "0.1"
 futures = "0.1"
 log = "0.4"
+uuid = { version = "0.7", features = ["serde", "v4"] }

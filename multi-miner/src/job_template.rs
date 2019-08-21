@@ -41,4 +41,13 @@ pub struct ProofMulti {
 
 }
 
+#[derive(Clone, Serialize, Deserialize, Debug)]
+pub struct Task {
+    pub work_id: String,
+    /// Extra Data used to encode miner info AND more entropy
+    pub extra_data: Vec<u8>,
+    /// merkle root of multi-mining headers
+    pub merkle_root: Hash,
 
+
+}

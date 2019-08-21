@@ -7,7 +7,7 @@ use rand::{
 use serde_derive::{Deserialize, Serialize};
 use std::thread;
 use std::time::Duration;
-use crate::job_template::{ProofMulti, JobTemplate, Hash};
+use crate::job_template::{ProofMulti, JobTemplate, Hash,Task};
 use log::{info, error, warn, debug};
 
 use super::Seal;
@@ -15,19 +15,19 @@ use super::Seal;
 
 pub struct Dummy {
     start: bool,
-    pow_hash: Option<Hash>,
-    seal_tx: Sender<(Hash, Seal)>,
+    task: Option<Task>,
+    seal_tx: Sender<(String, Seal)>,
     worker_rx: Receiver<WorkerMessage>,
 }
 
 impl Dummy {
     pub fn new(
-        seal_tx: Sender<(Hash, Seal)>,
+        seal_tx: Sender<(String, Seal)>,
         worker_rx: Receiver<WorkerMessage>,
     ) -> Self {
         Self {
             start: true,
-            pow_hash: None,
+            task: None,
             seal_tx,
             worker_rx,
         }
@@ -36,7 +36,7 @@ impl Dummy {
     fn poll_worker_message(&mut self) {
         if let Ok(msg) = self.worker_rx.recv() {
             match msg {
-                WorkerMessage::NewWork(pow_hash) => self.pow_hash = Some(pow_hash),
+                WorkerMessage::NewWork(task) => self.task = Some(task),
                 WorkerMessage::Stop => {
                     self.start = false;
                 }
@@ -47,11 +47,11 @@ impl Dummy {
         }
     }
 
-    fn solve(&self, pow_hash: Hash, nonce: u64) {
+    fn solve(&self, task: Task, nonce: u64) {
         let seal = Seal { extra_data: vec![], nonce };
-        println!("solve send_seal_tx: {}", pow_hash);
+        println!("solve send_seal_tx: {:?}", task);
 
-        if let Err(err) = self.seal_tx.send((pow_hash.clone(), seal)) {
+        if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
             error!("seal_tx send error {:?}", err);
         }
     }
@@ -64,8 +64,8 @@ impl Worker for Dummy {
         loop {
             self.poll_worker_message();
             if self.start {
-                if let Some(pow_hash) = self.pow_hash.clone() {
-                    self.solve(pow_hash, rng());
+                if let Some(task) = self.task.clone() {
+                    self.solve(task, rng());
                 }
             }
         }

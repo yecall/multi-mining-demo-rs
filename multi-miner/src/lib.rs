@@ -6,6 +6,8 @@ use crate::config::WorkerConfig;
 pub mod worker;
 pub mod miner;
 
+pub mod gateway;
+use std::collections::HashMap;
 
 pub struct Work {
     pub rawHash:Hash,
@@ -19,4 +21,11 @@ pub struct Work {
     /// shard info
     pub shard_num: u32,
     pub shard_cnt: u32,
+}
+
+pub struct WorkMap {
+    pub work_id: String,
+
+    pub work_map: HashMap<String,Work>,
+
 }

@@ -5,7 +5,7 @@ use rand::{random, Rng};
 use std::ops::Range;
 use std::sync::Arc;
 use std::thread;
-use crate::job_template::{ProofMulti,JobTemplate,Hash};
+use crate::job_template::{ProofMulti,JobTemplate,Hash,Task};
 use pow::Dummy;
 
 use log::{info,error,warn,debug};
@@ -14,7 +14,7 @@ use log::{info,error,warn,debug};
 pub enum WorkerMessage {
     Stop,
     Start,
-    NewWork(Hash),
+    NewWork(Task),
 }
 
 pub struct Seal {
@@ -67,7 +67,7 @@ fn nonce_generator(range: Range<u64>) -> impl FnMut() -> u64 {
 
 pub fn start_worker(
     config: WorkerConfig,
-    seal_tx: Sender<(Hash, Seal)>,
+    seal_tx: Sender<(String, Seal)>,
 ) -> WorkerController {
                 let worker_txs = (0..config.threads)
                     .map(|i| {

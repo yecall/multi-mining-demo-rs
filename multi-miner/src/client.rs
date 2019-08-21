@@ -1,5 +1,5 @@
 use crate::Work;
-use super::config::ClientConfig;
+use super::config::{ClientConfig,NodeConfig};
 use crate::job_template::{ProofMulti,JobTemplate,Hash};
 use yee_jsonrpc_types::{
     error::Error as RpcFail, error::ErrorCode as RpcFailCode, id::Id, params::Params,
@@ -42,6 +42,7 @@ impl Rpc {
         let (stop, stop_rx) = oneshot::channel::<()>();
 
         let thread = thread::spawn(move || {
+            println!("thsi is rpc new  thread id {:?}",thread::current().id());
             let client = HttpClient::builder().keep_alive(true).build_http();
 
             let stream = receiver.for_each(move |(sender, call): RpcRequest| {
@@ -104,20 +105,13 @@ impl Drop for Rpc {
 
 #[derive(Debug, Clone)]
 pub struct Client {
-    pub current_work_id: Option<Hash>,
-    pub new_work_tx: Sender<Work>,
     pub config: ClientConfig,
-    pub rpc: Rpc,
 }
 
 impl Client {
-    pub fn new(new_work_tx: Sender<Work>, config: ClientConfig) -> Client {
-        let uri: Uri = config.rpc_url.parse().expect("valid rpc url");
+    pub fn new( config: ClientConfig) -> Client {
 
         Client {
-            current_work_id: None,
-            rpc: Rpc::new(uri),
-            new_work_tx,
             config,
         }
     }
@@ -126,15 +120,16 @@ impl Client {
         &self,
         rawHash: Hash,
         job: &ProofMulti,
+        rpc:Rpc
     ) -> impl Future<Item = Output, Error = RpcError> {
         //let block: JsonBlock = block.into();
         let method = "submit_job".to_owned();
         let params = vec![json!(rawHash), json!(job)];
 
-        self.rpc.request(method, params)
+        rpc.request(method, params)
     }
-    pub fn submit_job(&self, rawHash: Hash, job: &ProofMulti) {
-        let future = self.send_submit_job_request(rawHash, job);
+    pub fn submit_job(&self, rawHash: Hash, job: &ProofMulti,rpc:Rpc) {
+        let future = self.send_submit_job_request(rawHash, job,rpc);
         if self.config.job_on_submit {
             let ret: Result<Option<Hash>, RpcError> = future.and_then(parse_response).wait();
             match ret {
@@ -153,74 +148,18 @@ impl Client {
         }
     }
 
-    pub fn poll_job_template(&mut self) {
-        println!("thsi is poll_job_template thread id {:?}",thread::current().id());
 
-        loop {
-            println!("poll job template...");
-            info!("poll job template...");
-            self.try_update_job_template();
-            thread::sleep(time::Duration::from_millis(self.config.poll_interval));
-        }
-    }
-
-    pub fn try_update_job_template(&mut self) {
-        match self.get_job_template().wait() {
-            Ok(job_template) => {
-                if self.current_work_id != Some(job_template.rawHash) {
-                    self.current_work_id = Some(job_template.rawHash.clone());
-                    if let Err(e) = self.notify_new_work(job_template.clone()) {
-                        error!("notify_new_job_template error: {:?}", e);
-                    }
-                }
-            }
-            Err(ref err) => {
-                let is_method_not_found = if let RpcError::Fail(RpcFail { code, .. }) = err {
-                    *code == RpcFailCode::MethodNotFound
-                } else {
-                    false
-                };
-                if is_method_not_found {
-                    error!(
-                        "RPC Method Not Found: \
-                         please do checks as follow: \
-                         1. if the  server has enabled the Miner API module; \
-                         2. If the RPC URL for yee miner is right.",
-                    );
-                } else {
-                    error!("rpc call get_job_template error: {:?}", err);
-                }
-            }
-        }
-    }
-
-    fn get_job_template(&self) -> impl Future<Item = JobTemplate, Error = RpcError> {
+    pub fn get_job_template(&self,rpc:Rpc) -> impl Future<Item = JobTemplate, Error = RpcError> {
         let method = "get_job_template".to_owned();
         let params = vec![];
 
-        self.rpc.request(method, params).and_then(parse_response)
+        rpc.request(method, params).and_then(parse_response)
     }
 
-    fn notify_new_work(&self, job_template: JobTemplate) -> Result<(), Error> {
-       // let work: Work = job_template.into();
-
-        let work = Work{
-            rawHash: job_template.rawHash,
-            difficulty: job_template.difficulty,
-            extra_data: vec![],
-            merkle_root: Hash::random(),
-            merkle_proof: vec![],
-            shard_num: 1,
-            shard_cnt: 4
-        };
-        println!("notify_new_work: {}", job_template.rawHash);
-
-        self.new_work_tx.send(work)?;
-        Ok(())
-    }
 }
 
 fn parse_response<T: serde::de::DeserializeOwned>(output: Output) -> Result<T, RpcError> {
+    println!("output---:{:?}", output);
     match output {
         Output::Success(success) => {
             serde_json::from_value::<T>(success.result).map_err(RpcError::Json)

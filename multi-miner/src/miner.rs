@@ -1,4 +1,4 @@
-use crate::client::Client;
+use crate::client::{Client,Rpc};
 use crate::config::WorkerConfig;
 use crate::worker::{start_worker, WorkerController, WorkerMessage};
 use crate::Work;
@@ -7,17 +7,19 @@ use std::sync::Arc;
 use std::thread;
 use log::{info,error,warn,debug};
 use crate::worker::Seal;
-use crate::job_template::{ProofMulti,JobTemplate,Hash};
+use crate::job_template::{ProofMulti,JobTemplate,Hash,Task};
 use lru_cache::LruCache;
 use util::Mutex;
+use crate::WorkMap;
+
 const WORK_CACHE_SIZE: usize = 32;
 
 pub struct Miner {
     pub client: Client,
     pub worker_controller: WorkerController,
-    pub work_rx: Receiver<Work>,
-    pub seal_rx: Receiver<(Hash, Seal)>,
-    pub works: Mutex<LruCache<Hash, Work>>,
+    pub work_rx: Receiver<WorkMap>,
+    pub seal_rx: Receiver<(String, Seal)>,
+    pub works: Mutex<LruCache<String, WorkMap>>,
 
 
 }
@@ -25,7 +27,7 @@ pub struct Miner {
 impl Miner {
     pub fn new(
         client: Client,
-        work_rx: Receiver<Work>,
+        work_rx: Receiver<WorkMap>,
         worker: WorkerConfig,
     ) -> Miner {
         let (seal_tx, seal_rx) = unbounded();
@@ -48,11 +50,17 @@ impl Miner {
             select! {
                 recv(self.work_rx) -> msg => match msg {
                     Ok(work) => {
-                        let pow_hash = work.rawHash;
-                        println!("cache_and send_WorkerMessage: {}", pow_hash);
-                         self.works.lock().insert(pow_hash.clone(), work);
+                        let work_id = work.work_id.clone();
+                        println!("cache_and send_WorkerMessage: {}", work_id);
+                        self.works.lock().insert(work_id.clone(), work);
 
-                        self.notify_workers(WorkerMessage::NewWork(pow_hash));
+                        let task = Task{
+                                    work_id: work_id,
+                                    extra_data: vec![],
+                                    merkle_root: Hash::random()
+                                   };
+
+                        self.notify_workers(WorkerMessage::NewWork(task));
                     },
                     _ => {
                         error!("work_rx closed");
@@ -60,7 +68,7 @@ impl Miner {
                     },
                 },
                 recv(self.seal_rx) -> msg => match msg {
-                    Ok((pow_hash, seal)) => self.check_seal(pow_hash, seal),
+                    Ok((work_id, seal)) => self.check_seal(work_id, seal),
                     _ => {
                         error!("seal_rx closed");
                         break;
@@ -70,19 +78,19 @@ impl Miner {
         }
     }
 
-    fn check_seal(&mut self, pow_hash: Hash, seal: Seal) {
-        if let Some(work) = self.works.lock().get_refresh(&pow_hash) {
-            println!("now  check_seal: {}", pow_hash);
+    fn check_seal(&mut self, work_id: String, seal: Seal) {
+        if let Some(work) = self.works.lock().get_refresh(&work_id) {
+            println!("now  check_seal: {}", work_id);
 
             let job = ProofMulti {
                 extra_data: vec![],
-                merkle_root: pow_hash.clone(),
+                merkle_root: Hash::random(),
                 nonce: 0,
                 shard_num: 0,
                 shard_cnt: 0,
                 merkle_proof: vec![]
             };
-            self.client.submit_job(pow_hash, &job);
+            self.client.submit_job(Hash::random(), &job,Rpc::new("127.0.0.1:3131".parse().expect("valid rpc url")));
             //self.client.try_update_job_template();
             //self.notify_workers(WorkerMessage::Start);
         }

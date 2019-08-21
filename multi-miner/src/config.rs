@@ -5,12 +5,10 @@ use std::collections::HashMap;
 pub struct MinerConfig {
     pub client: ClientConfig,
     pub workers: Vec<WorkerConfig>,
-    pub shards:Vec<ClientConfig>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct ClientConfig {
-    pub rpc_url: String,
     pub poll_interval: u64,
     pub job_on_submit: bool,
 }
@@ -21,6 +19,14 @@ pub struct WorkerConfig {
     pub threads: usize,
 }
 
+
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
+pub struct NodeConfig {
+
+    pub shards: Vec<String>,
+}
+
+//    pub clients:Vec<ClientConfig>,
 
 //#[derive(Serialize, Deserialize)]
 //#[derive(Debug, Clone)]
