@@ -12,6 +12,8 @@ use log::{info, error, warn, debug};
 use super::Seal;
 use primitives::blake2_256;
 use parity_codec::{Encode, Decode, Input};
+use chrono::prelude::*;
+extern crate chrono;
 
 pub struct Dummy {
     start: bool,
@@ -54,53 +56,47 @@ impl Dummy {
                 WorkerMessage::Start => {
                     self.start = true;
                 }
+                WorkerMessage::Run => {
+
+                }
+
             }
         }
     }
 
     fn solve(&self, task: &Task, nonce: u64) {
-           let mut n = 0;
-        loop{
 
-                if !self.start{
-                    println!("stop for msg");
+        let data = Data{
+            extra_data: task.extra_data.clone(),
+            merkle_root: task.merkle_root.clone(),
+            nonce
+        };
 
-                    break;
-                    }
-                let data = Data{
-                    extra_data: task.extra_data.clone(),
-                    merkle_root: task.merkle_root.clone(),
-                    nonce:n
-                };
+        let hash:Hash = blake2_256( &data.encode()).into();
 
-                let hash:Hash = blake2_256( &data.encode()).into();
-
-                let seal = Seal {post_hash:hash, nonce };
-               // println!("solve  input-merkleroot-{}-nonce-{}",data.merkle_root,data.nonce);
-                //println!("solve hash --{}", seal.post_hash);
-
-                if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
-                    error!("seal_tx send error {:?}", err);
-                }
-
-                n = n+1;
-        }
+        let seal = Seal {post_hash:hash, nonce };
+       // println!("solve  input-merkleroot-{}-nonce-{}",data.merkle_root,data.nonce);
+       // println!("solve hash --{}", seal.post_hash);
         
-
+        if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
+            error!("seal_tx send error {:?}", err);
+        }
     }
 }
 
 impl Worker for Dummy {
     fn run<G: FnMut() -> u64>(&mut self, mut rng: G) {
         println!("thsi is worker thread id {:?}",thread::current().id());
-        loop {
-            println!("thsi is pow run  loop");
-            self.poll_worker_message();
-                match self.task.clone(){
-                    Some(task)=>  self.solve(&task, rng()),
-                    _=>   println!("now is not have any work to solve "),
-                }
 
+        loop {
+            self.poll_worker_message();
+            println!("{}-poll_worker_message--{:?}", Local::now().timestamp_millis(),self.start);
+
+            if self.start {
+                if let Some(task) = self.task.clone() {
+                    self.solve(&task, rng());
+                }
+            }
         }
     }
 }

@@ -42,7 +42,7 @@ impl Rpc {
         let (stop, stop_rx) = oneshot::channel::<()>();
 
         let thread = thread::spawn(move || {
-            println!("thsi is rpc new  thread id {:?}",thread::current().id());
+            //println!("thsi is rpc new  thread id {:?}",thread::current().id());
             let client = HttpClient::builder().keep_alive(true).build_http();
 
             let stream = receiver.for_each(move |(sender, call): RpcRequest| {
@@ -161,7 +161,7 @@ impl Client {
 }
 
 fn parse_response<T: serde::de::DeserializeOwned>(output: Output) -> Result<T, RpcError> {
-    println!("output---:{:?}", output);
+    //println!("output---:{:?}", output);
     match output {
         Output::Success(success) => {
             serde_json::from_value::<T>(success.result).map_err(RpcError::Json)

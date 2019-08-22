@@ -15,6 +15,7 @@ pub enum WorkerMessage {
     Stop,
     Start,
     NewWork(Task),
+    Run,
 }
 
 pub struct Seal {

@@ -42,9 +42,9 @@ impl Gateway {
     }
 
     pub fn poll_job_template(&mut self) {
-        println!("thsi is poll_job_template thread id {:?}",thread::current().id());
+       // println!("thsi is poll_job_template thread id {:?}",thread::current().id());
         loop {
-            println!("poll job template...");
+           // println!("poll job template...");
             self.try_update_job_template();
             thread::sleep(time::Duration::from_millis(self.client.config.poll_interval));
         }
@@ -54,7 +54,7 @@ impl Gateway {
         let mut  set:HashMap<String,JobTemplate> =  HashMap::new();
 
         for (key, value) in &self.map {
-            println!("node url---[{}] = {}", key, value);
+           // println!("node url---[{}] = {}", key, value);
 
             match self.client.get_job_template(Rpc::new(value.parse().expect("valid rpc url"))).wait() {
                 Ok(job_template) => {
@@ -75,7 +75,7 @@ impl Gateway {
                          2. If the RPC URL for yee miner is right.",
                         );
                     } else {
-                        println!("rpc call get_job_template error: {:?}--shard num={}", err,key);
+                       // println!("rpc call get_job_template error: {:?}--shard num={}", err,key);
                     }
                 }
             }
@@ -89,7 +89,7 @@ impl Gateway {
 
         if !set.is_empty(){
             for (key, value) in set {
-                println!("set data---[{}] = {:?}", key, value);
+               // println!("set data---[{}] = {:?}", key, value);
 
                 if !self.current_job_set.contains_key(&key)|| self.current_job_set.get(&key).unwrap().clone().rawHash != value.rawHash{
                     f = true;
@@ -142,7 +142,7 @@ impl Gateway {
 
     fn notify_new_work(&self, work_map: WorkMap) -> Result<(), Error> {
 
-        println!("notify_new_work-{:?}",work_map.work_id);
+      //  println!("notify_new_work-{:?}",work_map.work_id);
         self.new_work_tx.send(work_map)?;
         Ok(())
     }

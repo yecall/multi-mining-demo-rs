@@ -14,10 +14,13 @@ use crate::WorkMap;
 use std::collections::HashMap;
 use std::convert::TryInto;
 use core::borrow::{BorrowMut, Borrow};
+use chrono::prelude::*;
+extern crate chrono;
 
 const WORK_CACHE_SIZE: usize = 32;
 /// Max length in bytes for pow extra data
 pub const MAX_EXTRA_DATA_LENGTH: usize = 32;
+
 
 pub struct Miner {
     pub client: Client,
@@ -25,7 +28,7 @@ pub struct Miner {
     pub work_rx: Receiver<WorkMap>,
     pub seal_rx: Receiver<(String, Seal)>,
     pub works: Mutex<LruCache<String, WorkMap>>,
-
+    pub state: Mutex<LruCache<Hash, ProofMulti>>,
 
 }
 
@@ -41,6 +44,7 @@ impl Miner {
 
         Miner {
             works: Mutex::new(LruCache::new(WORK_CACHE_SIZE)),
+            state: Mutex::new(LruCache::new(WORK_CACHE_SIZE)),
             client,
             worker_controller,
             work_rx,
@@ -52,12 +56,12 @@ impl Miner {
         println!("thsi is miner run thread id {:?}",thread::current().id());
 
         loop {
-           // println!("thsi is miner run  loop");
+            self.notify_workers(WorkerMessage::Run);
+
             select! {
                 recv(self.work_rx) -> msg => match msg {
                     Ok(work) => {
-                        println!("get new work .......");
-                        self.notify_workers(WorkerMessage::Stop);
+                       // println!("get new work .......");
                         let work_id = work.work_id.clone();
                         println!("cache_and send_WorkerMessage: {}", work_id);
                         self.works.lock().insert(work_id.clone(), work);
@@ -90,32 +94,25 @@ impl Miner {
        // println!("now  check_seal  work_id:");
 
         if let Some(work) = self.works.lock().get_refresh(&work_id) {
-            //println!("now  check_seal  work_id: {}", work_id);
+
+            println!("{}--now  check_seal  work_id: {}",  Local::now().timestamp_millis(),work_id);
 
             let mut work_set = &work.work_map;
-            let mut work_change:HashMap<String,Work> =  HashMap::new();
 
-            let mut f =false;
             let mut i = 0;
             let len = work_set.len();
 
             for (key, value) in  work_set {
-                let mut w = Work{
-                    rawHash: value.rawHash.clone(),
-                    difficulty: value.difficulty.clone(),
-                    extra_data: value.extra_data.clone(),
-                    merkle_root: value.merkle_root.clone(),
-                    merkle_proof: value.merkle_proof.clone(),
-                    shard_num: value.shard_num.clone(),
-                    shard_cnt: value.shard_cnt.clone(),
-                    has_commit: value.has_commit.clone()
-                };
-
 
                 let t =  self.verify_target(seal.post_hash,value.difficulty,value.extra_data.clone());
                 let m =  self.verify_merkel_proof(value.merkle_root,value.merkle_proof.clone());
+                let mut b = true;
+                if let Some(work) = self.state.lock().get_refresh(&value.rawHash) {
+                    b = false;
+                    i = i+1;
+                }
 
-                if(t&&m&&!value.has_commit){
+                if(t&&m&&b){
                     let submitjob = ProofMulti {
                         extra_data: value.extra_data.clone(),
                         merkle_root: value.merkle_root.clone(),
@@ -124,29 +121,21 @@ impl Miner {
                         shard_cnt: value.shard_cnt.clone(),
                         merkle_proof: value.merkle_proof.clone()
                     };
-                    println!("find seal ,now  submit_job  work_id: {:?}", submitjob);
+                    println!("find seal{} ,now  submit_job  work_id: {:?}",value.rawHash.clone(), submitjob);
 
-                    w.has_commit = true;
+                    self.state.lock().insert(value.rawHash.clone(), submitjob.clone());
+
                     self.client.submit_job(value.rawHash, &submitjob,Rpc::new("127.0.0.1:3131".parse().expect("valid rpc url")));
                 }
-
-                //只要有一个work的has_commit为true，则缓存lru更新work
-                if w.has_commit{
-                    f=true;
-                    i = i+1;
-                };
-
-                work_change.insert(key.to_string(),w);
 
             }
 
             if i >= len{//所有分片都出块了
-                println!("WorkerMessage::Stop");
-                self.notify_workers(WorkerMessage::Stop);
+               // println!("WorkerMessage::Stop");
+                  self.notify_workers(WorkerMessage::Stop);
+
             }
-            while f {
-                self.works.lock().insert(work_id.clone(), WorkMap{ work_id:work_id.clone(), work_map:work_change.clone() });
-            }
+
         }
 
     }
