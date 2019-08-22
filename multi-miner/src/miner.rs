@@ -52,21 +52,22 @@ impl Miner {
         println!("thsi is miner run thread id {:?}",thread::current().id());
 
         loop {
-            println!("thsi is miner run  loop");
+           // println!("thsi is miner run  loop");
             select! {
                 recv(self.work_rx) -> msg => match msg {
                     Ok(work) => {
+                        println!("get new work .......");
+                        self.notify_workers(WorkerMessage::Stop);
                         let work_id = work.work_id.clone();
                         println!("cache_and send_WorkerMessage: {}", work_id);
                         self.works.lock().insert(work_id.clone(), work);
-                        self.notify_workers(WorkerMessage::Start);
 
                         let task = Task{
                                     work_id: work_id,
                                     extra_data: vec![],
                                     merkle_root: Hash::random()
                                    };
-
+                        self.notify_workers(WorkerMessage::Start);
                         self.notify_workers(WorkerMessage::NewWork(task));
                     },
                     _ => {
@@ -86,8 +87,10 @@ impl Miner {
     }
 
     fn check_seal(&mut self, work_id: String, seal: Seal) {
+       // println!("now  check_seal  work_id:");
+
         if let Some(work) = self.works.lock().get_refresh(&work_id) {
-            println!("now  check_seal  work_id: {}", work_id);
+            //println!("now  check_seal  work_id: {}", work_id);
 
             let mut work_set = &work.work_map;
             let mut work_change:HashMap<String,Work> =  HashMap::new();
@@ -97,7 +100,7 @@ impl Miner {
             let len = work_set.len();
 
             for (key, value) in  work_set {
-                let w = Work{
+                let mut w = Work{
                     rawHash: value.rawHash.clone(),
                     difficulty: value.difficulty.clone(),
                     extra_data: value.extra_data.clone(),
@@ -108,14 +111,6 @@ impl Miner {
                     has_commit: value.has_commit.clone()
                 };
 
-
-                //只要有一个work的has_commit为true，则缓存lru更新work
-                if value.has_commit{
-                    f=true;
-                    i = i+1;
-                };
-
-                work_change.insert(key.to_string(),w);
 
                 let t =  self.verify_target(seal.post_hash,value.difficulty,value.extra_data.clone());
                 let m =  self.verify_merkel_proof(value.merkle_root,value.merkle_proof.clone());
@@ -131,12 +126,22 @@ impl Miner {
                     };
                     println!("find seal ,now  submit_job  work_id: {:?}", submitjob);
 
+                    w.has_commit = true;
                     self.client.submit_job(value.rawHash, &submitjob,Rpc::new("127.0.0.1:3131".parse().expect("valid rpc url")));
                 }
+
+                //只要有一个work的has_commit为true，则缓存lru更新work
+                if w.has_commit{
+                    f=true;
+                    i = i+1;
+                };
+
+                work_change.insert(key.to_string(),w);
 
             }
 
             if i >= len{//所有分片都出块了
+                println!("WorkerMessage::Stop");
                 self.notify_workers(WorkerMessage::Stop);
             }
             while f {

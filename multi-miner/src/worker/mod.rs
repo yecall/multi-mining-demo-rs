@@ -70,27 +70,27 @@ pub fn start_worker(
     config: WorkerConfig,
     seal_tx: Sender<(String, Seal)>,
 ) -> WorkerController {
-                let worker_txs = (0..config.threads)
-                    .map(|i| {
-                        let worker_name = format!("yee-Worker-{}", i);
-                        let nonce_range = partition_nonce(i as u64, config.threads as u64);
-
+                        let worker_name = "yee-Worker";
                         let (worker_tx, worker_rx) = unbounded();
                         let mut worker = Dummy::new(seal_tx.clone(), worker_rx);
 
-                        thread::Builder::new()
-                            .name(worker_name)
-                            .spawn(move || {
-                                let rng = nonce_generator(nonce_range);
-                                worker.run(rng);
-                            })
-                            .expect("Start worker thread failed");
-                        worker_tx
-                    })
-                    .collect();
+                        println!("thsi is WorkerController thread id {:?}",thread::current().id());
 
-                WorkerController::new(worker_txs)
-            }
+                        let t= thread::Builder::new()
+                                                .name(worker_name.to_string())
+                                                .spawn(move || {
+                                                    let rng = || random();
+                                                    worker.run(rng);
+                                                })
+                                                .expect("Start worker thread failed");
+
+
+
+
+                 WorkerController::new(vec![worker_tx])
+
+
+}
 
 
 pub trait Worker {

@@ -58,23 +58,35 @@ impl Dummy {
         }
     }
 
-    fn solve(&self, task: Task, nonce: u64) {
+    fn solve(&self, task: &Task, nonce: u64) {
+           let mut n = 0;
+        loop{
 
-        let data = Data{
-            extra_data: task.extra_data,
-            merkle_root: task.merkle_root,
-            nonce
-        };
+                if !self.start{
+                    println!("stop for msg");
 
-        let hash:Hash = blake2_256( &data.encode()).into();
+                    break;
+                    }
+                let data = Data{
+                    extra_data: task.extra_data.clone(),
+                    merkle_root: task.merkle_root.clone(),
+                    nonce:n
+                };
 
-        let seal = Seal {post_hash:hash, nonce };
-        println!("solve  input-merkleroot-{}-nonce-{}",data.merkle_root,data.nonce);
-        println!("solve hash --{}", seal.post_hash);
-        
-        if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
-            error!("seal_tx send error {:?}", err);
+                let hash:Hash = blake2_256( &data.encode()).into();
+
+                let seal = Seal {post_hash:hash, nonce };
+               // println!("solve  input-merkleroot-{}-nonce-{}",data.merkle_root,data.nonce);
+                //println!("solve hash --{}", seal.post_hash);
+
+                if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
+                    error!("seal_tx send error {:?}", err);
+                }
+
+                n = n+1;
         }
+        
+
     }
 }
 
@@ -82,15 +94,13 @@ impl Worker for Dummy {
     fn run<G: FnMut() -> u64>(&mut self, mut rng: G) {
         println!("thsi is worker thread id {:?}",thread::current().id());
         loop {
+            println!("thsi is pow run  loop");
             self.poll_worker_message();
-            if self.start {
                 match self.task.clone(){
-                    Some(task)=>  self.solve(task, rng()),
+                    Some(task)=>  self.solve(&task, rng()),
                     _=>   println!("now is not have any work to solve "),
                 }
 
-
-            }
         }
     }
 }
