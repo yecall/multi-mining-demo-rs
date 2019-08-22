@@ -134,6 +134,8 @@ impl Client {
             let ret: Result<Option<Hash>, RpcError> = future.and_then(parse_response).wait();
             match ret {
                 Ok(hash) => {
+                    println!("submit_job return ---:{:?}", hash);
+
                     if hash.is_none() {
                         warn!(
                             "submit_job failed {}",

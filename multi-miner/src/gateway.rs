@@ -82,6 +82,9 @@ impl Gateway {
 
         }
 
+
+
+
         let mut f = false; //更新标记，只要有一个分片数据更新即为true
 
         if !set.is_empty(){
@@ -113,32 +116,33 @@ impl Gateway {
                 let w = Work{
                     rawHash: value.rawHash,
                     difficulty: value.difficulty,
-                    extra_data: vec![],
+                    extra_data: "YeeRoot".as_bytes().to_vec(),
                     merkle_root: Hash::random(),
                     merkle_proof: vec![],
                     shard_num: key.parse().unwrap(),
-                    shard_cnt: len as u32,
+                    shard_cnt: self.map.len() as u32,
                     has_commit: false
+
                 };
+                println!("work---check-{:?}",w);
+
                 work_map.insert(key,w);
 
             }
             
 
 
-            let work_map = WorkMap{ work_id: Uuid::new_v4().to_string(), work_map:work_map };
-            if let Err(e) = self.notify_new_work(work_map) {
+            let pmap = WorkMap{ work_id: Uuid::new_v4().to_string(), work_map };
+            if let Err(e) = self.notify_new_work(pmap) {
                 error!("gateWay notify_new_work error: {:?}", e);
             }
 
         }
     }
 
-
     fn notify_new_work(&self, work_map: WorkMap) -> Result<(), Error> {
 
-       // println!("notify_new_work: {:?}", work);
-
+        println!("notify_new_work-{:?}",work_map.work_id);
         self.new_work_tx.send(work_map)?;
         Ok(())
     }

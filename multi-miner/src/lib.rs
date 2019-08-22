@@ -8,7 +8,7 @@ pub mod miner;
 
 pub mod gateway;
 use std::collections::HashMap;
-
+#[derive(Clone,  Debug)]
 pub struct Work {
     pub rawHash:Hash,
     pub difficulty: DifficultyType,
@@ -24,7 +24,7 @@ pub struct Work {
     //if commit ,set has_commit =true;
     pub has_commit: bool,
 }
-
+#[derive(Clone, Debug)]
 pub struct WorkMap {
     pub work_id: String,
 

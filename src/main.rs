@@ -23,7 +23,7 @@ fn main() {
     let (new_work_tx, new_work_rx) = unbounded();
 
     let cc = ClientConfig {
-        poll_interval: 1000,
+        poll_interval: 6000,
         job_on_submit: true
     };
     
