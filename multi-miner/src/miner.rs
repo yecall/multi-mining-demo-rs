@@ -83,7 +83,7 @@ impl Miner {
 
     fn check_seal(&mut self, work_id: String, seal: Seal) {
         if let Some(work) = self.works.lock().get_refresh(&work_id) {
-            println!("now  check_seal: {}", work_id);
+            println!("now  check_seal  work_id: {}", work_id);
 
             let mut work_map:HashMap<String,Work> =  HashMap::new();
 

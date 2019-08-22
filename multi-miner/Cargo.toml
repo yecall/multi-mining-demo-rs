@@ -26,3 +26,4 @@ exit-future = "0.1"
 futures = "0.1"
 log = "0.4"
 uuid = { version = "0.7", features = ["serde", "v4"] }
+parity-codec = "3.2"

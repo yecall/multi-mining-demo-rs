@@ -10,13 +10,25 @@ use std::time::Duration;
 use crate::job_template::{ProofMulti, JobTemplate, Hash,Task};
 use log::{info, error, warn, debug};
 use super::Seal;
-
+use primitives::blake2_256;
+use parity_codec::{Encode, Decode, Input};
 
 pub struct Dummy {
     start: bool,
     task: Option<Task>,
     seal_tx: Sender<(String, Seal)>,
     worker_rx: Receiver<WorkerMessage>,
+}
+
+
+#[derive(Clone, PartialEq, Eq, Encode, Decode)]
+pub struct Data {
+    pub extra_data: Vec<u8>,
+    /// merkle root of multi-mining headers
+    pub merkle_root: Hash,
+    /// POW block nonce
+    pub nonce: u64,
+
 }
 
 impl Dummy {
@@ -47,9 +59,19 @@ impl Dummy {
     }
 
     fn solve(&self, task: Task, nonce: u64) {
-        let seal = Seal {post_hash:Hash::random(), nonce };
-        println!("solve send_seal_tx: {:?}", task);
 
+        let data = Data{
+            extra_data: task.extra_data,
+            merkle_root: task.merkle_root,
+            nonce
+        };
+
+        let hash:Hash = blake2_256( &data.encode()).into();
+
+        let seal = Seal {post_hash:hash, nonce };
+        println!("solve  input-merkleroot-{}-nonce-{}",data.merkle_root,data.nonce);
+        println!("solve hash --{}", seal.post_hash);
+        
         if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
             error!("seal_tx send error {:?}", err);
         }
@@ -69,4 +91,24 @@ impl Worker for Dummy {
             }
         }
     }
+}
+
+#[cfg(test)]
+mod tests {
+
+    use primitives::{blake2_256,Blake2Hasher, H256};
+
+    #[test]
+    fn compare() {
+
+        let rawbytes = blake2_256("dw".as_bytes());
+
+        let hash:H256 = rawbytes.into();
+
+        let y:[u8; 32] = hash.into();
+
+        assert_eq!(rawbytes, y);
+    }
+
+
 }
