@@ -59,6 +59,7 @@ impl Miner {
                         let work_id = work.work_id.clone();
                         println!("cache_and send_WorkerMessage: {}", work_id);
                         self.works.lock().insert(work_id.clone(), work);
+                        self.notify_workers(WorkerMessage::Start);
 
                         let task = Task{
                                     work_id: work_id,
@@ -135,7 +136,7 @@ impl Miner {
 
             }
 
-            if i >= len{//所有分片都挖出同时没有新job
+            if i >= len{//所有分片都出块了
                 self.notify_workers(WorkerMessage::Stop);
             }
             while f {

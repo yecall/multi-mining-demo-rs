@@ -81,13 +81,15 @@ impl Dummy {
 impl Worker for Dummy {
     fn run<G: FnMut() -> u64>(&mut self, mut rng: G) {
         println!("thsi is worker thread id {:?}",thread::current().id());
-
         loop {
             self.poll_worker_message();
             if self.start {
-                if let Some(task) = self.task.clone() {
-                    self.solve(task, rng());
+                match self.task.clone(){
+                    Some(task)=>  self.solve(task, rng()),
+                    _=>   println!("now is not have any work to solve "),
                 }
+
+
             }
         }
     }
