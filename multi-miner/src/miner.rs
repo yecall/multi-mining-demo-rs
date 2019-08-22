@@ -11,6 +11,9 @@ use crate::job_template::{ProofMulti,JobTemplate,Hash,Task};
 use lru_cache::LruCache;
 use util::Mutex;
 use crate::WorkMap;
+use std::collections::HashMap;
+use std::convert::TryInto;
+use core::borrow::{BorrowMut, Borrow};
 
 const WORK_CACHE_SIZE: usize = 32;
 
@@ -82,6 +85,11 @@ impl Miner {
         if let Some(work) = self.works.lock().get_refresh(&work_id) {
             println!("now  check_seal: {}", work_id);
 
+            let mut work_map:HashMap<String,Work> =  HashMap::new();
+
+            let work_map = WorkMap{ work_id:work_id.clone(), work_map:work_map };
+
+
             let job = ProofMulti {
                 extra_data: vec![],
                 merkle_root: Hash::random(),
@@ -92,8 +100,19 @@ impl Miner {
             };
             //TODO
             //check target  check merkel proof  check bifurcation
+
+
+
             self.client.submit_job(Hash::random(), &job,Rpc::new("127.0.0.1:3131".parse().expect("valid rpc url")));
-            //self.client.try_update_job_template();
+
+
+
+            self.works.lock().insert(work_id.clone(), work_map);
+
+
+
+           // self.notify_workers(WorkerMessage::Stop);
+            // self.client.try_update_job_template();
             //self.notify_workers(WorkerMessage::Start);
         }
 

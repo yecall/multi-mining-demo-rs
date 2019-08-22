@@ -18,10 +18,11 @@ pub enum WorkerMessage {
 }
 
 pub struct Seal {
-    /// Extra Data used to encode miner info AND more entropy
-    pub extra_data: Vec<u8>,
+    /// hash{extra+root+nonce}
+    pub post_hash: Hash,
     /// POW block nonce
     pub nonce: u64,
+
 }
 
 pub struct MerkleSeal {

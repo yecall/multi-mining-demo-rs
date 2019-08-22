@@ -9,7 +9,6 @@ use std::thread;
 use std::time::Duration;
 use crate::job_template::{ProofMulti, JobTemplate, Hash,Task};
 use log::{info, error, warn, debug};
-
 use super::Seal;
 
 
@@ -48,7 +47,7 @@ impl Dummy {
     }
 
     fn solve(&self, task: Task, nonce: u64) {
-        let seal = Seal { extra_data: vec![], nonce };
+        let seal = Seal {post_hash:Hash::random(), nonce };
         println!("solve send_seal_tx: {:?}", task);
 
         if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
