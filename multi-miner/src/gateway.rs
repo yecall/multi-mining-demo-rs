@@ -105,9 +105,7 @@ impl Gateway {
         }
 
 
-
-
-        if f{
+        if f {
             let mut work_map:HashMap<String,Work> =  HashMap::new();
             let len = self.current_job_set.len();
 
@@ -119,7 +117,8 @@ impl Gateway {
                     merkle_root: Hash::random(),
                     merkle_proof: vec![],
                     shard_num: key.parse().unwrap(),
-                    shard_cnt: len as u32
+                    shard_cnt: len as u32,
+                    has_commit: false
                 };
                 work_map.insert(key,w);
 
@@ -129,7 +128,7 @@ impl Gateway {
 
             let work_map = WorkMap{ work_id: Uuid::new_v4().to_string(), work_map:work_map };
             if let Err(e) = self.notify_new_work(work_map) {
-                error!("notify_new_job_template error: {:?}", e);
+                error!("gateWay notify_new_work error: {:?}", e);
             }
 
         }

@@ -6,6 +6,6 @@ fn main() {
 
     http_run();
 
-    println!("{}", "miner！！！");
+    println!("{}", "miner server！！！");
 
 }

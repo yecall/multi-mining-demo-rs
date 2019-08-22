@@ -90,6 +90,8 @@ impl Miner {
                 shard_cnt: 0,
                 merkle_proof: vec![]
             };
+            //TODO
+            //check target  check merkel proof  check bifurcation
             self.client.submit_job(Hash::random(), &job,Rpc::new("127.0.0.1:3131".parse().expect("valid rpc url")));
             //self.client.try_update_job_template();
             //self.notify_workers(WorkerMessage::Start);

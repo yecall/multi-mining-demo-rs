@@ -34,12 +34,11 @@ fn main() {
     let mut gateway = Gateway::new(client.clone(),new_work_tx,map);
 
     let mut miner =  Miner::new(client.clone(),new_work_rx,workert.clone());
-    info!("{}","start client ");
 
     let t= thread::Builder::new()
-        .name("client".to_string())
+        .name("gateway".to_string())
         .spawn(move || gateway.poll_job_template())
-        .expect("Start client failed!");
+        .expect("Start gateway failed!");
 
     miner.run();
 
