@@ -90,7 +90,7 @@ impl Worker for Dummy {
 
         loop {
             self.poll_worker_message();
-            println!("{}-poll_worker_message--{:?}", Local::now().timestamp_millis(),self.start);
+         //  println!("{}-poll_worker_message--{:?}", Local::now().timestamp_millis(),self.start);
 
             if self.start {
                 if let Some(task) = self.task.clone() {

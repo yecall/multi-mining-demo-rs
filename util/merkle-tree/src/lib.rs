@@ -1,4 +1,3 @@
-
 pub mod merkle_tree;
 
-pub use crate::merkle_tree::{MerkleProof, MerkleTree, MerkleData};
+pub use crate::merkle_tree::{MerkleProof, MerkleTree, BMT,Merge};

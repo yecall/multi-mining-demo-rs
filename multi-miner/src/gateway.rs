@@ -103,7 +103,7 @@ impl Gateway {
 
 
         }else {
-            println!("没有任何分片更新数据。。。");
+            println!("warning:No data of shard  updates");
 
         }
 
@@ -120,11 +120,12 @@ impl Gateway {
                     merkle_root: Hash::random(),
                     merkle_proof: vec![],
                     shard_num: key.parse().unwrap(),
-                    shard_cnt: self.map.len() as u32,
-                    has_commit: false
+                    shard_cnt: self.map.len() as u32
 
                 };
-                println!("work---check-{:?}",w);
+               // println!("work---check-{:?}",w);
+                  println!("shard-{}-update! check-{:?}",w.shard_num.clone(),w.clone());
+
 
                 work_map.insert(key,w);
 

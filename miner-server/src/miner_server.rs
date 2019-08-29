@@ -28,6 +28,7 @@ struct RpcImpl;
 impl Rpc for RpcImpl {
     fn get_job_template(&self) -> Result<JobTemplate> {
         let job = JobTemplate { difficulty: DifficultyType::from(0x00003fff) << 224, rawHash: Hash::random() };
+        //0x00003fff   0x3fffffff
         Ok(job)
     }
 
@@ -35,7 +36,7 @@ impl Rpc for RpcImpl {
     fn call(&self, ) -> FutureResult<JobTemplate, Error> {
         let ten_millis = time::Duration::from_millis(2000);
         thread::sleep(ten_millis);
-        let job = JobTemplate { difficulty: DifficultyType::from(0x00003fff) << 224, rawHash: Hash::random() };
+        let job = JobTemplate { difficulty: DifficultyType::from(0x00fffffff) << 224, rawHash: Hash::random() };
 
         future::ok(job).into()
     }
@@ -48,7 +49,7 @@ impl Rpc for RpcImpl {
     }
 }
 
-pub fn http_run() {
+pub fn http_run(url:String) {
 
     let mut io = IoHandler::new();
     let rpc = RpcImpl;
@@ -56,7 +57,8 @@ pub fn http_run() {
     io.extend_with(rpc.to_delegate());
 
     let _server = ServerBuilder::new(io)
-        .start_http(&"127.0.0.1:3131".parse().unwrap())
+       // .start_http(&"127.0.0.1:3131".parse().unwrap())
+        .start_http(&url.parse().unwrap())
         .expect("Unable to start RPC server");
 
     _server.wait();

@@ -95,7 +95,7 @@ impl Miner {
 
         if let Some(work) = self.works.lock().get_refresh(&work_id) {
 
-            println!("{}--now  check_seal  work_id: {}",  Local::now().timestamp_millis(),work_id);
+          //  println!("{}--now  check_seal  work_id: {}",  Local::now().timestamp_millis(),work_id);
 
             let mut work_set = &work.work_map;
 
@@ -121,7 +121,7 @@ impl Miner {
                         shard_cnt: value.shard_cnt.clone(),
                         merkle_proof: value.merkle_proof.clone()
                     };
-                    println!("find seal{} ,now  submit_job  work_id: {:?}",value.rawHash.clone(), submitjob);
+                    println!("find seal:{} ,now  submit_job  work_id: {:?}",value.rawHash.clone(), submitjob);
 
                     self.state.lock().insert(value.rawHash.clone(), submitjob.clone());
 
@@ -131,7 +131,7 @@ impl Miner {
             }
 
             if i >= len{//所有分片都出块了
-               // println!("WorkerMessage::Stop");
+                //println!("WorkerMessage::Stop-i-{}",i.clone());
                   self.notify_workers(WorkerMessage::Stop);
 
             }
