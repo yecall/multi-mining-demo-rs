@@ -76,7 +76,7 @@ impl Dummy {
 
         let seal = Seal {post_hash:hash, nonce };
        // println!("solve  input-merkleroot-{}-nonce-{}",data.merkle_root,data.nonce);
-       // println!("solve hash --{}", seal.post_hash);
+        //println!("solve hash --{}", seal.post_hash);
         
         if let Err(err) = self.seal_tx.send((task.work_id.clone(), seal)) {
             error!("seal_tx send error {:?}", err);
