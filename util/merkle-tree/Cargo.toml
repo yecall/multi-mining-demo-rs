@@ -7,7 +7,5 @@ edition = "2018"
 primitives = { package = "substrate-primitives", git = "https://github.com/yeeco/substrate.git", branch = "v1.0" }
 blake2-rfc = "0.2.18"
 parity-codec = "3.2"
+rust-crypto = "0.2.36"
 
-
-[dev-dependencies]
-proptest = "0.8"
