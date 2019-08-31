@@ -1,4 +1,3 @@
-
 extern crate crypto;
 use std::fmt;
 use std::hash::Hasher;
@@ -10,17 +9,18 @@ use crypto::digest::Digest;
 use primitives::H256;
 use primitives::blake2_256;
 
+
 #[derive(Clone)]
-struct CryptoYeeAlgorithm(Sha256);
+pub struct CryptoYeeAlgorithm(Sha256);
 
 impl CryptoYeeAlgorithm {
-    fn new() -> CryptoYeeAlgorithm {
+   pub fn new() -> CryptoYeeAlgorithm {
         CryptoYeeAlgorithm(Sha256::new())
     }
 }
 
 impl Default for CryptoYeeAlgorithm {
-    fn default() -> CryptoYeeAlgorithm {
+   fn default() -> CryptoYeeAlgorithm {
         CryptoYeeAlgorithm::new()
     }
 }
@@ -33,11 +33,12 @@ impl Hasher for CryptoYeeAlgorithm {
 
     #[inline]
     fn finish(&self) -> u64 {
-        unimplemented!()
+        //unimplemented!()
+        0
     }
 }
 
-type CryptoSHA256Hash = [u8; 32];
+pub type CryptoSHA256Hash = [u8; 32];
 
 impl Algorithm<CryptoSHA256Hash> for CryptoYeeAlgorithm {
     #[inline]
@@ -66,12 +67,13 @@ impl Algorithm<CryptoSHA256Hash> for CryptoYeeAlgorithm {
         self.write(right.as_ref());
         self.hash()
     }
+
 }
 
-struct HexSlice<'a>(&'a [u8]);
+pub struct HexSlice<'a>(&'a [u8]);
 
 impl<'a> HexSlice<'a> {
-    fn new<T>(data: &'a T) -> HexSlice<'a>
+   pub fn new<T>(data: &'a T) -> HexSlice<'a>
         where
             T: ?Sized + AsRef<[u8]> + 'a,
     {
@@ -92,36 +94,68 @@ impl<'a> fmt::Display for HexSlice<'a> {
 }
 
 
-fn main(){
+fn leaf_str(){
 
-    let mut h1 = [0u8; 32];
-    let mut h2 = [0u8; 32];
-    let mut h3 = [0u8; 32];
-    h1[0] = 0x00;
-    h2[0] = 0x11;
-    h3[0] = 0x22;
-
+//    let hash:H256 = blake2_256( "YeeRoot".as_bytes()).into();
+//    let xd: [u8;32] = hash.clone().into();
+//    println!("solve hash hash****{} ",hash);
+//    println!("solve hash xd --{:?}", xd);
+//
     let mut a = CryptoYeeAlgorithm::new();
-    let h11 = h1;
-    let h12 = h2;
-    let h13 = h3;
-    let h21 = a.node(h11, h12);
-    a.reset();
-    let h22 = a.node(h13, h13);
-    a.reset();
-    let h31 = a.node(h21, h22);
-    a.reset();
-
-    let xa = HexSlice::new(h21.as_ref());
-    let xb = HexSlice::new(h22.as_ref());
-    let xc = HexSlice::new(h31.as_ref());
-    println!("xa-{}",xa);
-    println!("xb-{}",xb);
-    println!("xc-{}",xc);
+//
+//    "yee".hash(&mut a);
+//    //let h11 = a.hash();
+//
+//    let h11 = xd;
+//    println!("h11-{}", HexSlice::new(h11.as_ref()));
+//    a.reset();
+//
+//    "yeeroot".hash(&mut a);
+//    let h12 = a.hash();
+//    println!("h12-{}", HexSlice::new(h12.as_ref()));
+//    a.reset();
+//
+//    "yeeco".hash(&mut a);
+//    let h13 = a.hash();
+//    println!("h13-{}", HexSlice::new(h13.as_ref()));
+//    a.reset();
+//
+//
+//    let h21 = a.node(h11, h12);
+//    a.reset();
+//    let h22 = a.node(h13, h13);
+//    a.reset();
+//    let h31 = a.node(h21, h22);
+//    a.reset();
+//
+//    let xa = HexSlice::new(h21.as_ref());
+//    let xb = HexSlice::new(h22.as_ref());
+//    let xc = HexSlice::new(h31.as_ref());
+//    println!("h21-{}",xa);
+//    println!("h22-{}",xb);
+//    println!("h31-{}",xc);
 
 
     let t: MerkleTree<CryptoSHA256Hash, CryptoYeeAlgorithm> =
-        MerkleTree::from_iter(vec![h1, h2, h3]);
+        MerkleTree::from_iter(vec!["yee", "yeeroot", "yeeco"].iter().map(|x|{
+            a.reset();
+            x.hash(&mut a);
+            a.hash()
+        }));
+
+
+    let ln = t.leafs();
+    println!("ln--{}",ln);
+    let hi = t.height();
+    println!("hi--{}",hi);
+    //let data = t.deref();
+
+
+
+    for i in 0..t.leafs() {
+        let p = t.gen_proof(i);
+        p.validate::<CryptoYeeAlgorithm>();
+    }
 
 
 
@@ -135,70 +169,11 @@ fn main(){
 
     let proofc = t.gen_proof(2);
 
+
+
     let f = proofa.validate::<CryptoYeeAlgorithm>();
 
     println!("ff---{}",f)
-
-}
-
-fn leaf_str(){
-
-        let hash:H256 = blake2_256( "YeeRoot".as_bytes()).into();
-        let xd: [u8;32] = hash.clone().into();
-        println!("solve hash hash****{} ",hash);
-        println!("solve hash xd --{:?}", xd);
-
-        let mut a = CryptoYeeAlgorithm::new();
-
-        "yee".hash(&mut a);
-        //let h11 = a.hash();
-
-        let h11 = xd;
-        println!("h11-{}", HexSlice::new(h11.as_ref()));
-        a.reset();
-
-        "yeeroot".hash(&mut a);
-        let h12 = a.hash();
-        println!("h12-{}", HexSlice::new(h12.as_ref()));
-        a.reset();
-
-        "yeeco".hash(&mut a);
-        let h13 = a.hash();
-        println!("h13-{}", HexSlice::new(h13.as_ref()));
-        a.reset();
-
-
-        let h21 = a.node(h11, h12);
-        a.reset();
-        let h22 = a.node(h13, h13);
-        a.reset();
-        let h31 = a.node(h21, h22);
-        a.reset();
-
-        let xa = HexSlice::new(h21.as_ref());
-        let xb = HexSlice::new(h22.as_ref());
-        let xc = HexSlice::new(h31.as_ref());
-        println!("h21-{}",xa);
-        println!("h22-{}",xb);
-        println!("h31-{}",xc);
-
-
-        let t: MerkleTree<CryptoSHA256Hash, CryptoYeeAlgorithm> =
-            MerkleTree::from_iter(vec![h11, h12, h13]);
-
-        let root = t.root();
-
-        println!("root-{}",   HexSlice::new(t.root().as_ref()));
-
-        let proofa = t.gen_proof(0);
-
-        let proofb = t.gen_proof(1);
-
-        let proofc = t.gen_proof(2);
-
-        let f = proofa.validate::<CryptoYeeAlgorithm>();
-
-        println!("ff---{}",f)
 
 
 }

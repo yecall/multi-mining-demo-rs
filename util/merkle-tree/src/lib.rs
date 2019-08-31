@@ -64,7 +64,7 @@
 pub mod hash;
 
 /// Common implementations for [`Hashable`].
-mod hash_impl;
+pub mod hash_impl;
 
 /// Merkle tree inclusion proof
 pub mod proof;

@@ -37,10 +37,10 @@ use std::ops;
 /// TODO: Ord
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct MerkleTree<T: Ord + Clone + AsRef<[u8]>, A: Algorithm<T>> {
-    data: Vec<T>,
-    leafs: usize,
-    height: usize,
-    _a: PhantomData<A>,
+    pub  data: Vec<T>,
+    pub  leafs: usize,
+    pub  height: usize,
+    pub  _a: PhantomData<A>,
 }
 
 impl<T: Ord + Clone + AsRef<[u8]>, A: Algorithm<T>> MerkleTree<T, A> {

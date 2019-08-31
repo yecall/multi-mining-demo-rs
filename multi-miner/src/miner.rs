@@ -16,6 +16,8 @@ use std::convert::TryInto;
 use core::borrow::{BorrowMut, Borrow};
 use chrono::prelude::*;
 extern crate chrono;
+use yee_merkle::proof::Proof;
+use crate::merkle::{CryptoYeeAlgorithm,CryptoSHA256Hash,HexSlice};
 
 const WORK_CACHE_SIZE: usize = 32;
 /// Max length in bytes for pow extra data
@@ -63,13 +65,16 @@ impl Miner {
                     Ok(work) => {
                        // println!("get new work .......");
                         let work_id = work.work_id.clone();
+                        let merkle_root = work.merkle_root.clone();
+                        let  extra_data = work.extra_data.clone();
+
                         println!("cache_and send_WorkerMessage: {}", work_id);
                         self.works.lock().insert(work_id.clone(), work);
 
                         let task = Task{
                                     work_id: work_id,
-                                    extra_data: vec![],
-                                    merkle_root: Hash::random()
+                                    extra_data: extra_data,
+                                    merkle_root: merkle_root
                                    };
                         self.notify_workers(WorkerMessage::Start);
                         self.notify_workers(WorkerMessage::NewWork(task));
@@ -105,7 +110,7 @@ impl Miner {
             for (key, value) in  work_set {
 
                 let t =  self.verify_target(seal.post_hash,value.difficulty,value.extra_data.clone());
-                let m =  self.verify_merkel_proof(value.merkle_root,value.merkle_proof.clone());
+                let m =  self.verify_merkel_proof(value.work_mark.clone(),value.merkle_proof.clone());
                 let mut b = true;
                 if let Some(work) = self.state.lock().get_refresh(&value.rawHash) {
                     b = false;
@@ -155,9 +160,13 @@ impl Miner {
         return true;
     }
 
-    fn verify_merkel_proof(&self,merkle_root:Hash,merkle_proof: Vec<u8>)-> bool{
+    fn verify_merkel_proof(&self,work_mark:[u8;32],merkle_proof: Proof<[u8;32]>)-> bool{
 
-        return true;
+        let item =  merkle_proof.item();
+
+        let f =merkle_proof.validate::<CryptoYeeAlgorithm>()&&(work_mark==item);
+       // println!("verify-fff-{}",f);
+        f
     }
 
 

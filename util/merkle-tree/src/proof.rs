@@ -1,4 +1,5 @@
 use crate::hash::Algorithm;
+use serde_derive::{Deserialize, Serialize};
 
 /// Merkle tree inclusion proof for data element, for which item = Leaf(Hash(Data Item)).
 ///
@@ -9,10 +10,11 @@ use crate::hash::Algorithm;
 /// ```
 ///
 /// Proof validation is positioned hash against lemma path to match root hash.
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Clone, Serialize, Deserialize, Debug, Eq, PartialEq)]
+
 pub struct Proof<T: Eq + Clone + AsRef<[u8]>> {
-    lemma: Vec<T>,
-    path: Vec<bool>,
+   pub lemma: Vec<T>,
+   pub path: Vec<bool>,
 }
 
 impl<T: Eq + Clone + AsRef<[u8]>> Proof<T> {

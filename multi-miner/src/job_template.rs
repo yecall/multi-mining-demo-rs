@@ -2,6 +2,7 @@
 
 use serde_derive::{Deserialize, Serialize};
 use std::convert::From;
+use yee_merkle::proof::Proof;
 
 
 pub type DifficultyType = primitives::U256;
@@ -32,7 +33,7 @@ pub struct ProofMulti {
     /// merkle root of multi-mining headers
     pub merkle_root: Hash,
     /// merkle tree spv proof
-    pub merkle_proof: Vec<u8>,
+    pub merkle_proof: Proof<[u8;32]>,
     /// POW block nonce
     pub nonce: u64,
     /// shard info
