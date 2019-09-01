@@ -17,7 +17,9 @@ use core::borrow::{BorrowMut, Borrow};
 use chrono::prelude::*;
 extern crate chrono;
 use yee_merkle::proof::Proof;
-use crate::merkle::{CryptoYeeAlgorithm,CryptoSHA256Hash,HexSlice};
+use crate::merkle::{CryptoYeeAlgorithm};
+use yee_merkle::hash::{Algorithm, Hashable};
+use primitives::hexdisplay::HexDisplay;
 
 const WORK_CACHE_SIZE: usize = 32;
 /// Max length in bytes for pow extra data
@@ -68,7 +70,7 @@ impl Miner {
                         let merkle_root = work.merkle_root.clone();
                         let  extra_data = work.extra_data.clone();
 
-                        println!("cache_and send_WorkerMessage: {}", work_id);
+                      //  println!("cache_and send_WorkerMessage: {}", work_id);
                         self.works.lock().insert(work_id.clone(), work);
 
                         let task = Task{
@@ -110,7 +112,7 @@ impl Miner {
             for (key, value) in  work_set {
 
                 let t =  self.verify_target(seal.post_hash,value.difficulty,value.extra_data.clone());
-                let m =  self.verify_merkel_proof(value.work_mark.clone(),value.merkle_proof.clone());
+                let m =  self.verify_merkel_proof(value.rawHash,value.merkle_proof.clone());
                 let mut b = true;
                 if let Some(work) = self.state.lock().get_refresh(&value.rawHash) {
                     b = false;
@@ -126,7 +128,11 @@ impl Miner {
                         shard_cnt: value.shard_cnt.clone(),
                         merkle_proof: value.merkle_proof.clone()
                     };
-                    println!("find seal:{} ,now  submit_job  work_id: {:?}",value.rawHash.clone(), submitjob);
+                  //  println!("find seal-{}:{} ,now  submit_job  work_id: {:?}", Local::now().time(),value.rawHash.clone(), submitjob);
+                    println!("find seal-{}:{} ", Local::now().time(),value.rawHash.clone());
+                    println!("                                 ");
+                    println!("                                 ");
+
 
                     self.state.lock().insert(value.rawHash.clone(), submitjob.clone());
 
@@ -160,12 +166,22 @@ impl Miner {
         return true;
     }
 
-    fn verify_merkel_proof(&self,work_mark:[u8;32],merkle_proof: Proof<[u8;32]>)-> bool{
+    fn verify_merkel_proof(&self,rawhash:Hash,merkle_proof: Proof<[u8;32]>)-> bool{
+        let mut a = CryptoYeeAlgorithm::new();
+        let borrowed_string ="0x".to_string();
+
+        let together = format!("{}{}", borrowed_string, HexDisplay::from(Hash::as_fixed_bytes(&rawhash.clone())).to_string());
+        together.clone().hash(&mut a);
+        let h2 = a.hash();
+        //  println!("rawhash--{}-Sha256(rawhash):{:?}",rawhash.clone(), h2);
+        a.reset();
 
         let item =  merkle_proof.item();
 
-        let f =merkle_proof.validate::<CryptoYeeAlgorithm>()&&(work_mark==item);
-       // println!("verify-fff-{}",f);
+        // println!("verify_merkel_proof---item-{:?}",item);
+
+        let f =merkle_proof.validate::<CryptoYeeAlgorithm>()&&(h2==item);
+        //println!("verify-f-{}",f);
         f
     }
 

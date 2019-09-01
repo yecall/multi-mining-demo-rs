@@ -21,7 +21,6 @@ use crate::merkle::{CryptoYeeAlgorithm,CryptoSHA256Hash,HexSlice};
 use yee_merkle::hash::{Algorithm, Hashable};
 use yee_merkle::merkle::MerkleTree;
 use std::iter::FromIterator;
-use std::hash::Hash;
 use primitives::{H256,blake2_256};
 
 extern crate crypto;
@@ -29,6 +28,7 @@ use std::fmt;
 use std::hash::Hasher;
 use crypto::sha2::Sha256;
 use crypto::digest::Digest;
+use primitives::hexdisplay::HexDisplay;
 
 const WORK_CACHE_SIZE: usize = 32;
 
@@ -135,16 +135,29 @@ impl Gateway {
 
             let mut va = vec![];
 
-            let mut sort:HashMap<H256,usize> =  HashMap::new();
+            let mut sort:HashMap<String,usize> =  HashMap::new();
 
             let mut i = 0;
+            let borrowed_string ="0x".to_string();
+            let mut a = CryptoYeeAlgorithm::new();
+
             for (key, value) in  self.current_job_set.clone() {
-                va.push(value.rawHash);
-                sort.insert(value.rawHash.clone(),i);
+
+                let together = format!("{}{}", borrowed_string, HexDisplay::from(H256::as_fixed_bytes(&value.rawHash.clone())).to_string());
+                together.clone().hash(&mut a);
+                let h2 = a.hash();
+                println!("h2{}-{:?}",value.rawHash.clone(), h2);
+                a.reset();
+
+                va.push(together.clone());
+                sort.insert(together.clone(),i);
                 i = i+1;
             }
 
-            let mut a = CryptoYeeAlgorithm::new();
+
+
+
+
             let mt: MerkleTree<CryptoSHA256Hash, CryptoYeeAlgorithm> =
                 MerkleTree::from_iter(va.iter().map(|x|{
                     a.reset();
@@ -163,7 +176,7 @@ impl Gateway {
 
 
             for (key, value) in  self.current_job_set.clone() {
-                let proof = mt.gen_proof(*sort.get(&value.rawHash).unwrap());
+                let proof = mt.gen_proof(*sort.get(&format!("{}{}", borrowed_string, HexDisplay::from(H256::as_fixed_bytes(&value.rawHash.clone())).to_string())).unwrap());
                 let w = Work{
                     rawHash: value.rawHash,
                     difficulty: value.difficulty,
@@ -172,7 +185,6 @@ impl Gateway {
                     merkle_proof: proof.clone(),
                     shard_num: key.parse().unwrap(),
                     shard_cnt: self.map.len() as u32,
-                    work_mark:  proof.item()
                 };
                // println!("work---check-{:?}",w);
                   println!("shard-{}-update! check-{:?}",w.shard_num.clone(),w.clone());

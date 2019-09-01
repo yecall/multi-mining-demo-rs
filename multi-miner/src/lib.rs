@@ -23,7 +23,6 @@ pub struct Work {
     /// shard info
     pub shard_num: u32,
     pub shard_cnt: u32,
-    pub work_mark:[u8;32],
     //if commit ,set has_commit =true;
    // pub has_commit: bool,
 }
